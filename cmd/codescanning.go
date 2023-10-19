@@ -126,12 +126,12 @@ var codeScanningCmd = &cobra.Command{
 				log.Println(err)
 				continue
 			}
-			log.Printf("Ref created succesfully at : %s\n", newbranchref)
 			if len(newbranchref) <= 0 {
 				log.Println("ERROR: Unable to create new branch")
 				Errors[repo.FullName] = errors.New("Something went wrong when creating new branch")
 			}
-
+			log.Printf("Ref created succesfully at : %s\n", newbranchref)
+			
 			createdFile, err := repo.createWorkflowFile(client)
 			if err != nil {
 				log.Println(err)
@@ -149,10 +149,9 @@ var codeScanningCmd = &cobra.Command{
 				log.Println(err)
 				continue
 			}
-
-			if len(createdFile) <= 0 {
-				log.Println("ERROR: Unable to create new file")
-				Errors[repo.FullName] = errors.New("Something went wrong when creating new file")
+			if len(createdPR) <= 0 {
+				log.Println("ERROR: Unable to create new pull request")
+				Errors[repo.FullName] = errors.New("Something went wrong when creating new pull request")
 				continue
 			}
 			log.Printf("Successfully raised pull request %s on branch %s in repository %s\n", createdPR, newbranchref, repo.FullName)
