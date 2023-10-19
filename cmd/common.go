@@ -19,7 +19,6 @@ import (
 )
 
 var Organization string
-// var RepositoryName string
 var WorkflowFile string
 var LogFile string
 
