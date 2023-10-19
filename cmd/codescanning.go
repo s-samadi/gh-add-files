@@ -45,7 +45,7 @@ var codeScanningCmd = &cobra.Command{
 
 		// check if organization or csv file is provided
 		if len(Organization) <= 0 && len(CsvFile) <= 0 {
-			log.Fatalln("Either organization flag or csv flag must be provided")
+			log.Fatalln("ERROR: Either organization flag or csv flag must be provided")
 		}
 
 		log.Println("Set up REST API Client for GitHub interactions")
