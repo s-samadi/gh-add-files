@@ -32,7 +32,7 @@ var codeScanningCmd = &cobra.Command{
 
 		//set up logging
 		if len(LogFile) <= 0 {
-			LogFile = "code-scanning.out"
+			LogFile = "gh-add-files.log"
 		}
 
 		logFile, err := os.OpenFile(LogFile, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
@@ -42,6 +42,8 @@ var codeScanningCmd = &cobra.Command{
 		mw := io.MultiWriter(os.Stdout, logFile)
 		log.SetOutput(mw)
 		defer logFile.Close()
+
+		log.Printf("Logging all output to %s\n", LogFile)
 
 		// check if organization or csv file is provided
 		if len(Organization) <= 0 && len(CsvFile) <= 0 {
