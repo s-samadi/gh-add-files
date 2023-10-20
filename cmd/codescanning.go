@@ -17,7 +17,7 @@ func init() {
 	codeScanningCmd.PersistentFlags().StringVarP(&Organization, "organization", "o", "", "specify Organisation to implement code scanning")
 	codeScanningCmd.PersistentFlags().StringVarP(&WorkflowFile, "workflow", "w", "", "specify the path to the code scanning workflow file")
 	codeScanningCmd.MarkPersistentFlagRequired("workflow")
-	codeScanningCmd.PersistentFlags().StringVarP(&LogFile, "log", "l", "code-scanning.out", "specify the path where the log file will be saved")
+	codeScanningCmd.PersistentFlags().StringVarP(&LogFile, "log", "l", "gh-add-files.log", "specify the path where the log file will be saved")
 	codeScanningCmd.PersistentFlags().StringVarP(&CsvFile, "csv", "c", "", "specify the location of csv file")
 	// MarkFlagsOneRequired is only available in cobra v1.8.0 that still isn't released yet (https://github.com/spf13/cobra/issues/1936#issuecomment-1669126066)
 	// codeScanningCmd.MarkFlagsOneRequired("csv", "organization")
