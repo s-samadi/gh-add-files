@@ -96,6 +96,8 @@ var codeScanningCmd = &cobra.Command{
 			}
 		}
 
+		var pullRequests []string
+
 		for _, repo := range repos {
 
 			log.Printf("Details for Repository: Full Name: %s; Name: %s; Default Branch: %s\n", repo.FullName, repo.Name, repo.DefaultBranch)
@@ -169,12 +171,21 @@ var codeScanningCmd = &cobra.Command{
 				continue
 			}
 			log.Printf("Successfully raised pull request %s on branch %s in repository %s\n", createdPR, newbranchref, repo.FullName)
+			pullRequests = append(pullRequests, createdPR)
 
 		}
 		log.Printf("Number of repos processed: %d\n", len(repos))
 		if len(Errors) == 0 {
 			log.Println("No errors where found when enabling code scanning")
 		}
+
+		if len(pullRequests) > 0 {
+			log.Printf("Pull requests raised: %d\n", len(pullRequests))
+			for _, pr := range pullRequests {
+				log.Printf("PR URL: %s\n", pr)
+			}
+		}
+
 		for k, v := range Errors {
 
 			log.Printf("ERROR: Repository: [%s] Message: [%s]\n", k, v)
