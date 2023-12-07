@@ -97,6 +97,9 @@ var codeScanningCmd = &cobra.Command{
 		}
 
 		var pullRequests []string
+		var defaultScan []string
+		var noLanguage []string
+		var advancedSetup []string
 
 		for _, repo := range repos {
 
@@ -110,6 +113,7 @@ var codeScanningCmd = &cobra.Command{
 
 			if len(coverage) <= 0 {
 				log.Printf("No CodeQL supported language found for repository: %s", repo.FullName)
+				noLanguage = append(noLanguage, repo.FullName)
 				continue
 			}
 
@@ -122,6 +126,7 @@ var codeScanningCmd = &cobra.Command{
 			}
 			if isDefaultSetupEnabled == true {
 				log.Printf("Default setup already enabled for this repository: %s, skipping enablement.", repo.FullName)
+				defaultScan = append(defaultScan, repo.FullName)
 				continue
 			}
 
@@ -134,6 +139,7 @@ var codeScanningCmd = &cobra.Command{
 			}
 			if isCodeQLEnabled == true {
 				log.Printf("CodeQL workflow file already exists for this repository: %s, skipping enablement.", repo.FullName)
+				advancedSetup = append(advancedSetup, repo.FullName)
 				continue
 			}
 
@@ -179,6 +185,27 @@ var codeScanningCmd = &cobra.Command{
 			log.Println("No errors where found when enabling code scanning")
 		}
 
+		if len(noLanguage) > 0 {
+			log.Printf("Repositories with no CodeQL supported language: %d\n", len(noLanguage))
+			for _, repo := range noLanguage {
+				log.Printf("Repository: %s\n", repo)
+			}
+		}
+
+		if len(defaultScan) > 0 {
+			log.Printf("Repositories with default setup already enabled: %d\n", len(defaultScan))
+			for _, repo := range defaultScan {
+				log.Printf("Repository: %s\n", repo)
+			}
+		}
+
+		if len(advancedSetup) > 0 {
+			log.Printf("Repositories with advanced setup already enabled: %d\n", len(advancedSetup))
+			for _, repo := range advancedSetup {
+				log.Printf("Repository: %s\n", repo)
+			}
+		}
+
 		if len(pullRequests) > 0 {
 			log.Printf("Pull requests raised: %d\n", len(pullRequests))
 			for _, pr := range pullRequests {
@@ -186,9 +213,12 @@ var codeScanningCmd = &cobra.Command{
 			}
 		}
 
-		for k, v := range Errors {
+		if len(Errors) > 0 {
+			log.Printf("Repositories with errors: %d\n", len(Errors))
+			for k, v := range Errors {
 
-			log.Printf("ERROR: Repository: [%s] Message: [%s]\n", k, v)
+				log.Printf("ERROR: Repository: [%s] Message: [%s]\n", k, v)
+			}
 		}
 
 		log.Printf("Finished enable code scanning! \n")
