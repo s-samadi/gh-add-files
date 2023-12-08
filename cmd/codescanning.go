@@ -231,7 +231,7 @@ var codeScanningCmd = &cobra.Command{
 			log.Printf("Repositories with errors: %d\n", len(Errors))
 			for k, v := range Errors {
 
-				log.Printf("ERROR: Repository: [%s] Message: [%s]\n", k, v)
+				log.Printf("Repository: %s Message: [%s]\n", k, v)
 			}
 		}
 
