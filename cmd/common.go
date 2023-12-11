@@ -368,7 +368,7 @@ func (repo *Repository) raisePullRequest() (string, error) {
 
 	## How do I merge this PR?
 
-	This PR should have triggered a some CodeQL jobs to run. If these jobs have passed, you can merge this PR. If they have failed, please take a look at the logs to identify what went wrong and contact the security team if you require assistance.
+	This PR should have triggered CodeQL scans for each [eligible](https://codeql.github.com/docs/codeql-overview/supported-languages-and-frameworks/) language in this repository. If these jobs have passed, you can merge this PR. If they have failed, please take a look at the logs to identify what went wrong and contact the security team if you require assistance.
 
 	The most common issue that will cause this PR to fail is if the autobuilder is unable to build your codebase (for compiled languages). We will need your help to feed in a build command that will allow your codebase to compile. Please see [here](https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#building-your-code) for more information.
 
