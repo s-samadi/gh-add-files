@@ -55,6 +55,11 @@ func Test_getRepos(t *testing.T) {
 					Name:          "titanforest",
 					DefaultBranch: "main",
 				},
+				{
+					FullName:      "paradisisland/shiganshima",
+					Name:          "shiganshima",
+					DefaultBranch: "main",
+				},
 			},
 			wantErr: false,
 		},
@@ -443,8 +448,6 @@ func TestRepository_checkDefaultSetupEnabled(t *testing.T) {
 			want:    false,
 			wantErr: true,
 		},
-
-
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -611,7 +614,7 @@ func TestRepository_doesCodeqlWorkflowExist(t *testing.T) {
 	}
 }
 
-func TestRepository_createWorkflowFile(t *testing.T) {
+func TestRepository_readCodeqlWorkflowFile(t *testing.T) {
 	type fields struct {
 		FullName      string
 		Name          string
@@ -619,6 +622,178 @@ func TestRepository_createWorkflowFile(t *testing.T) {
 	}
 	type args struct {
 		WorkflowFile string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+		// Write test cases for the following scenarios:
+		// 1. When a codeql workflow file is provided and is valid
+		// 2. When a codeql workflow file is provided and is invalid
+		// 3. When a codeql workflow file is not provided
+
+		// Test case 1
+		{
+			name: "When a codeql workflow file is provided and is valid",
+			fields: fields{
+				FullName:      "paradisisland/maria",
+				Name:          "maria",
+				DefaultBranch: "main",
+			},
+			args: args{
+				WorkflowFile: "../examples/codeql.yml",
+			},
+			want:    []byte("name: CodeQL \non:\n  push:\n    branches: [ \"main\" ]\n  pull_request:\n    branches: [ \"main\" ]\n  workflow_dispatch:\n\njobs:\n code_analysis:\n   uses: advanced-security-demo/central-repo-test/.github/workflows/code_analysis.yml@main\n"),
+			wantErr: false,
+		},
+
+		// Test case 2
+		{
+			name: "When a codeql workflow file is provided and is invalid",
+			fields: fields{
+				FullName:      "paradisisland/maria",
+				Name:          "maria",
+				DefaultBranch: "main",
+			},
+			args: args{
+				WorkflowFile: "../examples/codeql_invalid.yml",
+			},
+			want:    []byte(""),
+			wantErr: true,
+		},
+
+		// Test case 3
+		{
+			name: "When a codeql workflow file is not provided",
+			fields: fields{
+				FullName:      "paradisisland/maria",
+				Name:          "maria",
+				DefaultBranch: "main",
+			},
+			args: args{
+				WorkflowFile: "",
+			},
+			want:    []byte(""),
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &Repository{
+				FullName:      tt.fields.FullName,
+				Name:          tt.fields.Name,
+				DefaultBranch: tt.fields.DefaultBranch,
+			}
+			got, err := repo.readCodeqlWorkflowFile(tt.args.WorkflowFile)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Repository.readCodeqlWorkflowFile() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Repository.readCodeqlWorkflowFile() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRepository_generateCodeqlWorkflowFile(t *testing.T) {
+	type fields struct {
+		FullName      string
+		Name          string
+		DefaultBranch string
+	}
+	type args struct {
+		TemplateWorkflowFile string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+		// Write test cases for the following scenarios:
+		// 1. When a template workflow file is provided and is valid
+		// 2. When a template workflow file is provided and is invalid
+		// 3. When a template workflow file is not provided
+
+		// Test case 1
+		{
+			name: "When a template workflow file is provided and is valid",
+			fields: fields{
+				FullName:      "paradisisland/maria",
+				Name:          "maria",
+				DefaultBranch: "totallyuniquebranchname",
+			},
+			args: args{
+				TemplateWorkflowFile: "../examples/codeql-template.yml",
+			},
+			want:    []byte("name: CodeQL \non:\n  push:\n    branches: [ \"totallyuniquebranchname\" ]\n  pull_request:\n    branches: [ \"totallyuniquebranchname\" ]\n  workflow_dispatch:\n\njobs:\n code_analysis:\n   uses: advanced-security-demo/central-repo-test/.github/workflows/code_analysis.yml@main\n"),
+			wantErr: false,
+		},
+
+		// Test case 2
+		{
+			name: "When a template workflow file is provided and is invalid",
+			fields: fields{
+				FullName:      "paradisisland/maria",
+				Name:          "maria",
+				DefaultBranch: "main",
+			},
+			args: args{
+				TemplateWorkflowFile: "../examples/codeql-template-invalid.yml",
+			},
+			want:    []byte(""),
+			wantErr: true,
+		},
+
+		// Test case 3
+		{
+			name: "When a template workflow file is not provided",
+			fields: fields{
+				FullName:      "paradisisland/maria",
+				Name:          "maria",
+				DefaultBranch: "main",
+			},
+			args: args{
+				TemplateWorkflowFile: "",
+			},
+			want:    []byte(""),
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &Repository{
+				FullName:      tt.fields.FullName,
+				Name:          tt.fields.Name,
+				DefaultBranch: tt.fields.DefaultBranch,
+			}
+			got, err := repo.generateCodeqlWorkflowFile(tt.args.TemplateWorkflowFile)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Repository.generateCodeqlWorkflowFile() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Repository.generateCodeqlWorkflowFile() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRepository_commitWorkflowFile(t *testing.T) {
+	type fields struct {
+		FullName      string
+		Name          string
+		DefaultBranch string
+	}
+	type args struct {
+		WorkflowFile []byte
 	}
 	tests := []struct {
 		name    string
@@ -642,7 +817,7 @@ func TestRepository_createWorkflowFile(t *testing.T) {
 				DefaultBranch: "main",
 			},
 			args: args{
-				WorkflowFile: "../examples/codeql.yml",
+				WorkflowFile: []byte("name: CodeQL \non:\n  push:\n    branches: [ \"main\" ]\n  pull_request:\n    branches: [ \"main\" ]\n  workflow_dispatch:\n\njobs:\n code_analysis:\n   uses: advanced-security-demo/central-repo-test/.github/workflows/code_analysis.yml@main\n"),
 			},
 			want:    "codeql.yml",
 			wantErr: false,
@@ -657,7 +832,7 @@ func TestRepository_createWorkflowFile(t *testing.T) {
 				DefaultBranch: "main",
 			},
 			args: args{
-				WorkflowFile: "../examples/codeql.yml",
+				WorkflowFile: []byte("name: CodeQL \non:\n  push:\n    branches: [ \"main\" ]\n  pull_request:\n    branches: [ \"main\" ]\n  workflow_dispatch:\n\njobs:\n code_analysis:\n   uses: advanced-security-demo/central-repo-test/.github/workflows/code_analysis.yml@main\n"),
 			},
 			want:    "",
 			wantErr: true,
@@ -672,7 +847,7 @@ func TestRepository_createWorkflowFile(t *testing.T) {
 				DefaultBranch: "main",
 			},
 			args: args{
-				WorkflowFile: "../examples/codeql.yml",
+				WorkflowFile: []byte("name: CodeQL \non:\n  push:\n    branches: [ \"main\" ]\n  pull_request:\n    branches: [ \"main\" ]\n  workflow_dispatch:\n\njobs:\n code_analysis:\n   uses: advanced-security-demo/central-repo-test/.github/workflows/code_analysis.yml@main\n"),
 			},
 			want:    "",
 			wantErr: true,
@@ -685,13 +860,13 @@ func TestRepository_createWorkflowFile(t *testing.T) {
 				Name:          tt.fields.Name,
 				DefaultBranch: tt.fields.DefaultBranch,
 			}
-			got, err := repo.createWorkflowFile(tt.args.WorkflowFile)
+			got, err := repo.commitWorkflowFile(tt.args.WorkflowFile)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Repository.createWorkflowFile() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Repository.commitWorkflowFile() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("Repository.createWorkflowFile() = %v, want %v", got, tt.want)
+				t.Errorf("Repository.commitWorkflowFile() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -835,5 +1010,4 @@ func TestRepository_deleteBranch(t *testing.T) {
 		})
 	}
 }
-
 
