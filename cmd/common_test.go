@@ -468,6 +468,92 @@ func TestRepository_checkDefaultSetupEnabled(t *testing.T) {
 	}
 }
 
+func TestRepository_disableDefaultSetup(t *testing.T) {
+	type fields struct {
+		FullName      string
+		Name          string
+		DefaultBranch string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		want    bool
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+		// Write test cases for the following scenarios:
+		// 1. When the repository has default setup enabled
+		// 2. When the repository does not have default setup enabled
+		// 3. When the repository does not have Advanced Security enabled
+		// 4. When the repository is invalid
+
+		// Test case 1
+		{
+			name: "When the repository has default setup enabled",
+			fields: fields{
+				FullName:      "paradisisland/shiganshima",
+				Name:          "shiganshima",
+				DefaultBranch: "main",
+			},
+			want:    true,
+			wantErr: false,
+		},
+
+		// Test case 2
+		{
+			name: "When the repository does not have default setup enabled",
+			fields: fields{
+				FullName:      "paradisisland/maria",
+				Name:          "maria",
+				DefaultBranch: "main",
+			},
+			want:    true,
+			wantErr: false,
+		},
+
+		// Test case 3
+		{
+			name: "When the repository does not have Advanced Security enabled",
+			fields: fields{
+				FullName:      "paradisisland/rose",
+				Name:          "rose",
+				DefaultBranch: "main",
+			},
+			want:    false,
+			wantErr: true,
+		},
+
+		// Test case 4
+		{
+			name: "When the repository is invalid",
+			fields: fields{
+				FullName:      "paradisisland/marley",
+				Name:          "marley",
+				DefaultBranch: "main",
+			},
+			want:    false,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &Repository{
+				FullName:      tt.fields.FullName,
+				Name:          tt.fields.Name,
+				DefaultBranch: tt.fields.DefaultBranch,
+			}
+			got, err := repo.disableDefaultSetup()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Repository.disableDefaultSetup() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("Repository.disableDefaultSetup() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestRepository_createBranchForRepo(t *testing.T) {
 	type fields struct {
 		FullName      string
@@ -492,6 +578,17 @@ func TestRepository_createBranchForRepo(t *testing.T) {
 			fields: fields{
 				FullName:      "paradisisland/maria",
 				Name:          "maria",
+				DefaultBranch: "main",
+			},
+			want:    "refs/heads/gh-cli/codescanningworkflow",
+			wantErr: false,
+		},
+
+		{
+			name: "When the repository does not have the branch codescanningworkflow",
+			fields: fields{
+				FullName:      "paradisisland/shiganshima",
+				Name:          "shiganshima",
 				DefaultBranch: "main",
 			},
 			want:    "refs/heads/gh-cli/codescanningworkflow",
@@ -551,6 +648,7 @@ func TestRepository_doesCodeqlWorkflowExist(t *testing.T) {
 		name    string
 		fields  fields
 		want    bool
+		want1   string
 		wantErr bool
 	}{
 		// TODO: Add test cases.
@@ -568,6 +666,7 @@ func TestRepository_doesCodeqlWorkflowExist(t *testing.T) {
 				DefaultBranch: "main",
 			},
 			want:    false,
+			want1:   "",
 			wantErr: false,
 		},
 
@@ -580,6 +679,19 @@ func TestRepository_doesCodeqlWorkflowExist(t *testing.T) {
 				DefaultBranch: "main",
 			},
 			want:    true,
+			want1:   "8d1c8b69c3fce7bea45c73efd06983e3c419a92f",
+			wantErr: false,
+		},
+
+		{
+			name: "When the repository has the CodeQL workflow file",
+			fields: fields{
+				FullName:      "paradisisland/shiganshima",
+				Name:          "shiganshima",
+				DefaultBranch: "main",
+			},
+			want:    true,
+			want1:   "0ae040b692ec3e927163db2b984135aa3c088cba",
 			wantErr: false,
 		},
 
@@ -602,13 +714,17 @@ func TestRepository_doesCodeqlWorkflowExist(t *testing.T) {
 				Name:          tt.fields.Name,
 				DefaultBranch: tt.fields.DefaultBranch,
 			}
-			got, err := repo.doesCodeqlWorkflowExist()
+			got, got1, err := repo.doesCodeqlWorkflowExist()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Repository.doesCodeqlWorkflowExist() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
 				t.Errorf("Repository.doesCodeqlWorkflowExist() = %v, want %v", got, tt.want)
+			}
+
+			if !reflect.DeepEqual(got1, tt.want1) {
+				t.Errorf("doesCodeqlWorkflowExist() got1 = %v, want %v", got1, tt.want1)
 			}
 		})
 	}
@@ -786,6 +902,8 @@ func TestRepository_generateCodeqlWorkflowFile(t *testing.T) {
 	}
 }
 
+
+
 func TestRepository_commitWorkflowFile(t *testing.T) {
 	type fields struct {
 		FullName      string
@@ -794,6 +912,7 @@ func TestRepository_commitWorkflowFile(t *testing.T) {
 	}
 	type args struct {
 		WorkflowFile []byte
+		commitSha    string
 	}
 	tests := []struct {
 		name    string
@@ -807,6 +926,7 @@ func TestRepository_commitWorkflowFile(t *testing.T) {
 		// 1. When the repository does not have the CodeQL workflow file
 		// 2. When the repository has the CodeQL workflow file
 		// 3. When the repository is invalid
+		// 4. When the repository has the CodeQL workflow file and we want to update it
 
 		// Test case 1
 		{
@@ -818,6 +938,7 @@ func TestRepository_commitWorkflowFile(t *testing.T) {
 			},
 			args: args{
 				WorkflowFile: []byte("name: CodeQL \non:\n  push:\n    branches: [ \"main\" ]\n  pull_request:\n    branches: [ \"main\" ]\n  workflow_dispatch:\n\njobs:\n code_analysis:\n   uses: advanced-security-demo/central-repo-test/.github/workflows/code_analysis.yml@main\n"),
+				commitSha:    "",
 			},
 			want:    "codeql.yml",
 			wantErr: false,
@@ -833,6 +954,7 @@ func TestRepository_commitWorkflowFile(t *testing.T) {
 			},
 			args: args{
 				WorkflowFile: []byte("name: CodeQL \non:\n  push:\n    branches: [ \"main\" ]\n  pull_request:\n    branches: [ \"main\" ]\n  workflow_dispatch:\n\njobs:\n code_analysis:\n   uses: advanced-security-demo/central-repo-test/.github/workflows/code_analysis.yml@main\n"),
+				commitSha:    "",
 			},
 			want:    "",
 			wantErr: true,
@@ -848,10 +970,28 @@ func TestRepository_commitWorkflowFile(t *testing.T) {
 			},
 			args: args{
 				WorkflowFile: []byte("name: CodeQL \non:\n  push:\n    branches: [ \"main\" ]\n  pull_request:\n    branches: [ \"main\" ]\n  workflow_dispatch:\n\njobs:\n code_analysis:\n   uses: advanced-security-demo/central-repo-test/.github/workflows/code_analysis.yml@main\n"),
+				commitSha:    "",
 			},
 			want:    "",
 			wantErr: true,
 		},
+
+		// Test case 4
+		{
+			name: "When the repository has the CodeQL workflow file and we want to update it",
+			fields: fields{
+				FullName:      "paradisisland/shiganshima",
+				Name:          "shiganshima",
+				DefaultBranch: "main",
+			},
+			args: args{
+				WorkflowFile: []byte("name: CodeQL \non:\n  push:\n    branches: [ \"main\" ]\n  pull_request:\n    branches: [ \"main\" ]\n  workflow_dispatch:\n\njobs:\n code_analysis:\n   uses: advanced-security-demo/central-repo-test/.github/workflows/code_analysis.yml@main\n"),
+				commitSha:    "0ae040b692ec3e927163db2b984135aa3c088cba",
+			},
+			want:    "codeql.yml",
+			wantErr: false,
+		},
+
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -860,7 +1000,7 @@ func TestRepository_commitWorkflowFile(t *testing.T) {
 				Name:          tt.fields.Name,
 				DefaultBranch: tt.fields.DefaultBranch,
 			}
-			got, err := repo.commitWorkflowFile(tt.args.WorkflowFile)
+			got, err := repo.commitWorkflowFile(tt.args.WorkflowFile, tt.args.commitSha)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Repository.commitWorkflowFile() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -970,6 +1110,16 @@ func TestRepository_deleteBranch(t *testing.T) {
 			fields: fields{
 				FullName:      "paradisisland/maria",
 				Name:          "maria",
+				DefaultBranch: "main",
+			},
+			wantErr: false,
+		},
+
+		{
+			name: "When the repository has the codescanningworkflow branch",
+			fields: fields{
+				FullName:      "paradisisland/shiganshima",
+				Name:          "shiganshima",
 				DefaultBranch: "main",
 			},
 			wantErr: false,

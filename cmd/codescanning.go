@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -17,6 +18,7 @@ var LogFile string
 var TemplateFile string
 var Branch string
 var CsvFile string
+var Force bool
 var Errors = make(map[string]error)
 
 func init() {
@@ -30,6 +32,7 @@ func init() {
 	// MarkFlagsOneRequired is only available in cobra v1.8.0 that still isn't released yet (https://github.com/spf13/cobra/issues/1936#issuecomment-1669126066)
 	// codeScanningCmd.MarkFlagsOneRequired("csv", "organization")
 	// codeScanningCmd.MarkFlagsOneRequired("workflow", "template")
+	codeScanningCmd.PersistentFlags().BoolVarP(&Force, "force", "f", false, "force enable code scanning advanced setup or update the existing code scanning workflow file")
 	
 }
 
@@ -148,29 +151,59 @@ var codeScanningCmd = &cobra.Command{
 				Errors[repo.FullName] = err
 				continue
 			}
-			if isDefaultSetupEnabled == true {
+			if isDefaultSetupEnabled == true && Force == false {
 				log.Printf("Default setup already enabled for this repository: %s, skipping enablement.", repo.FullName)
 				defaultScan = append(defaultScan, repo.FullName)
 				continue
+			} else if isDefaultSetupEnabled == true && Force == true {
+				log.Printf("Default setup already enabled for this repository: %s, but force flag is set, converting repo to advanced setup", repo.FullName)
+
+				result, err := repo.disableDefaultSetup()
+				if err != nil {
+					Errors[repo.FullName] = err
+					continue
+				}
+
+				if result == true {
+					log.Printf("Default setup disabled for repository: %s", repo.FullName)
+				}
 			}
 
 			//check that codeql workflow file doesn't already exist
-			isCodeQLEnabled, err := repo.doesCodeqlWorkflowExist()
+			isCodeQLEnabled, sha, err := repo.doesCodeqlWorkflowExist()
 			if err != nil {
 				log.Println(err)
 				Errors[repo.FullName] = err
 				continue
 			}
-			if isCodeQLEnabled == true {
+			if isCodeQLEnabled == true && Force == false {
 				log.Printf("CodeQL workflow file already exists for this repository: %s, skipping enablement.", repo.FullName)
 				advancedSetup = append(advancedSetup, repo.FullName)
 				continue
+			} else if isCodeQLEnabled == true && Force == true {
+				log.Printf("CodeQL workflow file already exists for this repository: %s, but force flag is set, updating workflow file", repo.FullName)
 			}
 
 			newbranchref, err := repo.createBranchForRepo()
 			if err != nil {
-				log.Println(err)
-				continue
+				// log.Println(err)
+				if strings.Contains(err.Error(), "already exists") && Force == true {
+					log.Printf("Force flag is set, removing existing branch for repository: %s\n", repo.FullName)
+					err := repo.deleteBranch()
+					if err != nil {
+						Errors[repo.FullName] = err
+						continue
+					}
+					log.Printf("Successfully removed branch for repository: %s\n", repo.FullName)
+					newbranchref, err = repo.createBranchForRepo()
+					if err != nil {
+						Errors[repo.FullName] = err
+						continue
+					}
+				} else {
+					Errors[repo.FullName] = err
+					continue
+				}
 			}
 			if len(newbranchref) <= 0 {
 				log.Println("ERROR: Unable to create new branch")
@@ -193,7 +226,7 @@ var codeScanningCmd = &cobra.Command{
 				}
 			}
 
-			createdFile, err := repo.commitWorkflowFile(workflowFile)
+			createdFile, err := repo.commitWorkflowFile(workflowFile, sha)
 			if err != nil {
 				log.Println(err)
 				continue
