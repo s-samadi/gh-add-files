@@ -355,20 +355,6 @@ func (repo *Repository) generateCodeqlWorkflowFile(TemplateWorkflowFile string) 
 }
 
 func (repo *Repository) commitWorkflowFile(WorkflowFile []byte, commitSha string) (string, error) {
-
-	//Open file on disk
-	// f, err := os.Open(WorkflowFile)
-	// if err != nil {
-	// 	log.Println(err)
-	// 	return "", err
-	// }
-	// reader := bufio.NewReader(f)
-	// content, err := io.ReadAll(reader)
-	// if err != nil {
-	// 	log.Println(err)
-	// 	return "", err
-	// }
-
 	encoded := base64.StdEncoding.EncodeToString((WorkflowFile))
 
 	type Commiter struct {
